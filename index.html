@@ -1,33 +1,113 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视界分析 AI - 移动端设计热图分析</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>视界分析 AI</title>
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background-color: #f9fafb;
-        }
+        * {margin: 0;padding: 0;box-sizing: border-box;font-family: sans-serif;}
+        body {background: #f9fafb;min-height: 100vh;}
+        header {background: white;box-shadow: 0 2px 4px rgba(0,0,0,0.1);padding: 16px 24px;}
+        .header-container {max-width: 1200px;margin: 0 auto;display: flex;justify-content: space-between;align-items: center;}
+        .logo {font-size: 24px;font-weight: bold;color: #3b82f6;}
+        .slogan {font-size: 14px;color: #64748b;}
+        main {max-width: 1200px;margin: 32px auto;padding: 0 24px;display: grid;grid-template-columns: 1fr 1fr;gap: 32px;}
+        .card {background: white;border-radius: 12px;box-shadow: 0 4px 6px rgba(0,0,0,0.1);padding: 24px;}
+        .card-title {font-size: 20px;font-weight: 600;color: #333;margin-bottom: 24px;}
+        .upload-area {border: 2px dashed #ccc;border-radius: 8px;padding: 32px;text-align: center;margin-bottom: 24px;}
+        .upload-icon {width: 48px;height: 48px;margin: 0 auto 16px;color: #999;}
+        .upload-text {color: #666;margin-bottom: 24px;}
+        .btn-primary {background: #3b82f6;color: white;border: none;padding: 12px 24px;border-radius: 8px;cursor: pointer;font-size: 16px;}
+        .btn-accent {background: #f97316;color: white;border: none;width: 100%;padding: 12px;border-radius: 8px;cursor: pointer;font-size: 16px;}
+        .result-area {display: flex;flex-direction: column;align-items: center;justify-content: center;height: 320px;color: #999;}
+        .result-icon {width: 64px;height: 64px;margin-bottom: 16px;}
+        footer {text-align: center;padding: 16px;background: white;color: #999;font-size: 14px;margin-top: auto;}
+        .uploaded-img {max-width: 100%;max-height: 200px;margin: 16px 0;}
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body>
-    <div id="root"></div>
+    <header>
+        <div class="header-container">
+            <h1 class="logo">视界分析 AI</h1>
+            <p class="slogan">移动端设计热图分析工具</p>
+        </div>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2 class="card-title">上传设计图</h2>
+            <div class="upload-area">
+                <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="upload-text">点击或拖拽文件至此处上传</p>
+                <input type="file" accept="image/*" class="hidden" id="file-input">
+                <button class="btn-primary" id="select-file-btn">选择文件</button>
+                <div id="img-preview" class="uploaded-img"></div>
+            </div>
+            <button class="btn-accent" id="analyze-btn">生成热图分析</button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">热图分析结果</h2>
+            <div class="result-area" id="result-container">
+                <svg class="result-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                </svg>
+                <p>上传设计图并点击分析按钮查看结果</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© 2026 视界分析 AI - 移动端设计热图分析工具</p>
+    </footer>
+
+    <script>
+        // 文件选择
+        const fileInput = document.getElementById('file-input');
+        const selectFileBtn = document.getElementById('select-file-btn');
+        const imgPreview = document.getElementById('img-preview');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const resultContainer = document.getElementById('result-container');
+
+        selectFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 图片预览
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imgPreview.innerHTML = `<img src="${event.target.result}" class="uploaded-img" alt="上传的设计图">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 分析按钮
+        analyzeBtn.addEventListener('click', () => {
+            if (!imgPreview.innerHTML) {
+                alert('请先上传设计图');
+                return;
+            }
+            resultContainer.innerHTML = `<div style="text-align:center"><p>分析中...</p></div>`;
+            setTimeout(() => {
+                resultContainer.innerHTML = `
+                    <div style="text-align:center">
+                        <h3>热图分析完成</h3>
+                        <p>核心优化建议：</p>
+                        <ul style="text-align:left;margin:16px auto;max-width:300px">
+                            <li>按钮位置优化</li>
+                            <li>文字排版调整</li>
+                            <li>增加留白区域</li>
+                        </ul>
+                    </div>
+                `;
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
