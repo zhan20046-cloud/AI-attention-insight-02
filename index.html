@@ -3,195 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视界分析 AI - 移动端设计热图分析</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>视界分析 AI</title>
+    <style>
+        * {margin: 0;padding: 0;box-sizing: border-box;font-family: 'Inter', 'Noto Sans SC', sans-serif;}
+        body {background: #f9fafb;min-height: 100vh;padding: 20px;}
+        .container {max-width: 1000px;margin: 0 auto;}
+        header {text-align: center;margin-bottom: 30px;}
+        .logo {font-size: 28px;font-weight: bold;color: #3b82f6;}
+        .slogan {color: #64748b;margin-top: 8px;}
+        .card-wrapper {display: grid;grid-template-columns: 1fr 1fr;gap: 20px;}
+        .card {background: white;border-radius: 12px;box-shadow: 0 4px 6px rgba(0,0,0,0.1);padding: 24px;}
+        .card-title {font-size: 20px;font-weight: 600;margin-bottom: 20px;}
+        .upload-area {border: 2px dashed #ccc;border-radius: 8px;padding: 30px;text-align: center;cursor: pointer;transition: border-color 0.3s;}
+        .upload-area:hover {border-color: #3b82f6;}
+        .upload-icon {width: 50px;height: 50px;margin: 0 auto 15px;}
+        .upload-text {color: #666;margin-bottom: 20px;}
+        .btn {padding: 12px 20px;border: none;border-radius: 8px;cursor: pointer;font-size: 16px;}
+        .btn-primary {background: #3b82f6;color: white;}
+        .btn-accent {background: #f97316;color: white;width: 100%;margin-top: 20px;}
+        .img-preview {max-width: 100%;max-height: 250px;margin: 20px 0;border-radius: 8px;}
+        .result-area {min-height: 300px;display: flex;flex-direction: column;align-items: center;justify-content: center;color: #999;}
+        .result-icon {width: 60px;height: 60px;margin-bottom: 15px;}
+        .result-content {text-align: left;width: 100%;color: #333;margin-top: 20px;}
+        footer {text-align: center;margin-top: 40px;color: #999;font-size: 14px;}
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background-color: #f9fafb;
-        }
-    </style>
-    <script type="importmap">
-    {
-        "imports": {
-            "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-            "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-            "react": "https://esm.sh/react@^19.2.3",
-            "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client"
-        }
-    }
-    </script>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="container">
+        <header>
+            <h1 class="logo">视界分析 AI</h1>
+            <p class="slogan">移动端设计热图分析工具</p>
+        </header>
 
-    <script type="module">
-        import React, { useState } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { Upload, HeatMap, AlertCircle } from 'lucide-react';
-        import { GoogleGenerativeAI } from '@google/genai';
-
-        // 初始化Google AI（替换为你的API Key）
-        const genAI = new GoogleGenerativeAI('YOUR_GEMINI_API_KEY');
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-        const App = () => {
-            const [image, setImage] = useState(null);
-            const [loading, setLoading] = useState(false);
-            const [result, setResult] = useState(null);
-            const [error, setError] = useState('');
-
-            // 处理图片上传
-            const handleImageUpload = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        setImage(event.target.result);
-                        setResult(null);
-                        setError('');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            // 调用Google AI分析热图
-            const analyzeImage = async () => {
-                if (!image) {
-                    setError('请先上传设计图');
-                    return;
-                }
-                setLoading(true);
-                setError('');
-                try {
-                    const prompt = `分析这张移动端设计图的用户注意力热图，给出3条优化建议，格式为：
-1. 建议1
-2. 建议2
-3. 建议3`;
-                    
-                    // 上传图片并请求分析
-                    const result = await model.generateContent([
-                        prompt,
-                        {
-                            inlineData: {
-                                mimeType: 'image/png',
-                                data: image.split(',')[1] // 提取base64数据
-                            }
-                        }
-                    ]);
-                    const response = await result.response;
-                    setResult(response.text());
-                } catch (err) {
-                    setError('分析失败，请检查API Key或网络');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            return (
-                <div className="min-h-screen p-6">
-                    <header className="max-w-4xl mx-auto mb-8 text-center">
-                        <h1 className="text-3xl font-bold text-blue-600 flex items-center justify-center gap-2">
-                            <HeatMap size={28} />
-                            视界分析 AI
-                        </h1>
-                        <p className="text-gray-500 mt-2">移动端设计注意力热图分析工具</p>
-                    </header>
-
-                    <main className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-                        {/* 上传区域 */}
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <h2 className="text-xl font-semibold mb-4">上传设计图</h2>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-                                {!image ? (
-                                    <>
-                                        <Upload size={48} className="mx-auto text-gray-400 mb-4" />
-                                        <p className="text-gray-500 mb-4">点击或拖拽文件至此处上传</p>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                            className="hidden"
-                                            id="file-upload"
-                                        />
-                                        <label
-                                            htmlFor="file-upload"
-                                            className="px-6 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors"
-                                        >
-                                            选择文件
-                                        </label>
-                                    </>
-                                ) : (
-                                    <>
-                                        <img
-                                            src={image}
-                                            alt="设计图预览"
-                                            className="max-w-full max-h-60 mx-auto rounded-md mb-4"
-                                        />
-                                        <button
-                                            onClick={() => setImage(null)}
-                                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors"
-                                        >
-                                            重新上传
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-
-                            {error && (
-                                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-600">
-                                    <AlertCircle size={18} />
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                onClick={analyzeImage}
-                                disabled={loading || !image}
-                                className="w-full mt-6 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
-                            >
-                                {loading ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        分析中...
-                                    </>
-                                ) : (
-                                    "生成热图分析"
-                                )}
-                            </button>
-                        </div>
-
-                        {/* 结果区域 */}
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <h2 className="text-xl font-semibold mb-4">分析结果</h2>
-                            <div className="min-h-[300px] flex flex-col items-center justify-center text-gray-400">
-                                {result ? (
-                                    <div className="text-left w-full text-gray-700 whitespace-pre-line">
-                                        {result}
-                                    </div>
-                                ) : (
-                                    <div className="text-center">
-                                        <HeatMap size={64} className="mx-auto mb-4" />
-                                        <p>上传设计图并点击分析按钮查看结果</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </main>
-
-                    <footer className="max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
-                        © 2026 视界分析 AI - 基于Google Gemini AI开发
-                    </footer>
+        <div class="card-wrapper">
+            <!-- 上传卡片 -->
+            <div class="card">
+                <h2 class="card-title">上传设计图</h2>
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="upload-text">点击或拖拽文件至此处上传</p>
+                    <input type="file" accept="image/*" id="fileInput" class="hidden">
+                    <button class="btn btn-primary" id="selectBtn">选择文件</button>
+                    <div id="previewContainer"></div>
                 </div>
-            );
-        };
+                <button class="btn btn-accent" id="analyzeBtn">生成热图分析</button>
+            </div>
 
-        // 渲染应用
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
+            <!-- 结果卡片 -->
+            <div class="card">
+                <h2 class="card-title">分析结果</h2>
+                <div class="result-area" id="resultArea">
+                    <svg class="result-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                    <p>上传设计图并点击分析按钮查看结果</p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            © 2026 视界分析 AI - 移动端设计工具
+        </footer>
+    </div>
+
+    <script>
+        // 元素获取
+        const fileInput = document.getElementById('fileInput');
+        const selectBtn = document.getElementById('selectBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewContainer = document.getElementById('previewContainer');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultArea = document.getElementById('resultArea');
+
+        // 选择文件
+        selectBtn.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => e.preventDefault());
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files[0]) fileInput.files = e.dataTransfer.files;
+            handleFileUpload();
+        });
+        fileInput.addEventListener('change', handleFileUpload);
+
+        // 处理文件上传
+        function handleFileUpload() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewContainer.innerHTML = `<img src="${e.target.result}" class="img-preview" alt="设计图">`;
+                resultArea.innerHTML = `
+                    <svg class="result-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                    <p>点击“生成热图分析”查看结果</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 模拟分析（实际项目替换为API调用）
+        analyzeBtn.addEventListener('click', () => {
+            if (!previewContainer.innerHTML) {
+                alert('请先上传设计图');
+                return;
+            }
+            resultArea.innerHTML = `<p>分析中...</p>`;
+            setTimeout(() => {
+                resultArea.innerHTML = `
+                    <div class="result-content">
+                        <h3>热图优化建议：</h3>
+                        <ul style="margin: 15px 0 0 20px;">
+                            <li>将按钮位置调整至页面视觉中心，提升点击率</li>
+                            <li>增加标题文字的字体大小，增强信息层级</li>
+                            <li>优化留白区域，减少视觉拥挤感</li>
+                        </ul>
+                    </div>
+                `;
+            }, 2000);
+        });
     </script>
 </body>
 </html>
