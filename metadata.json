@@ -1,0 +1,7 @@
+{
+  "name": "视界分析 AI - 移动端热图生成器",
+  "description": "基于先进视觉层级建模的 AI 驱动设计分析工具，可预测用户注意力并生成移动端 UI 热图。",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
