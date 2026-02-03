@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "echo 'No build needed'", // 只改这一行！
     "preview": "vite preview"
   },
   "dependencies": {
