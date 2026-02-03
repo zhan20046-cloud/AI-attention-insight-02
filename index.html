@@ -14,22 +14,133 @@
             background-color: #f9fafb;
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
+    <script src="https://esm.sh/react@19.2.3"></script>
+    <script src="https://esm.sh/react-dom@19.2.3/client"></script>
+    <script src="https://esm.sh/lucide-react@0.562.0"></script>
+    <script src="https://esm.sh/@google/genai@1.37.0"></script>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- 只改这一行：把原来的 React 代码移到单独文件，这里只引用 -->
-    <script type="module" src="/src/App.jsx"></script>
+    <script>
+        const { useState } = React;
+        const { createRoot } = ReactDOMClient;
+        const { Upload, HeatMap, AlertCircle } = LucideReact;
+        const { GoogleGenerativeAI } = GoogleGenAI;
+
+        const App = () => {
+            const [image, setImage] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [result, setResult] = useState(null);
+            const [error, setError] = useState('');
+
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setImage(event.target.result);
+                        setResult(null);
+                        setError('');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const analyzeImage = async () => {
+                if (!image) {
+                    setError('请先上传设计图');
+                    return;
+                }
+                setLoading(true);
+                setError('');
+                try {
+                    const genAI = new GoogleGenerativeAI('YOUR_GEMINI_API_KEY');
+                    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+                    const prompt = `分析这张移动端设计图的用户注意力热图，给出3条优化建议，格式为：
+1. 建议1
+2. 建议2
+3. 建议3`;
+                    const aiResult = await model.generateContent([
+                        prompt,
+                        { inlineData: { mimeType: 'image/png', data: image.split(',')[1] } }
+                    ]);
+                    setResult((await aiResult.response).text());
+                } catch (err) {
+                    setError('分析失败，请检查API Key');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return React.createElement('div', { className: 'min-h-screen p-6' },
+                React.createElement('header', { className: 'max-w-4xl mx-auto mb-8 text-center' },
+                    React.createElement('h1', { className: 'text-3xl font-bold text-blue-600 flex items-center justify-center gap-2' },
+                        React.createElement(HeatMap, { size: 28 }),
+                        '视界分析 AI'
+                    ),
+                    React.createElement('p', { className: 'text-gray-500 mt-2' }, '移动端设计注意力热图分析工具')
+                ),
+                React.createElement('main', { className: 'max-w-4xl mx-auto grid md:grid-cols-2 gap-8' },
+                    React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                        React.createElement('h2', { className: 'text-xl font-semibold mb-4' }, '上传设计图'),
+                        React.createElement('div', { className: 'border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors' },
+                            !image ? [
+                                React.createElement(Upload, { size: 48, className: 'mx-auto text-gray-400 mb-4' }),
+                                React.createElement('p', { className: 'text-gray-500 mb-4' }, '点击或拖拽文件至此处上传'),
+                                React.createElement('input', {
+                                    type: 'file',
+                                    accept: 'image/*',
+                                    onChange: handleImageUpload,
+                                    className: 'hidden',
+                                    id: 'file-upload'
+                                }),
+                                React.createElement('label', {
+                                    htmlFor: 'file-upload',
+                                    className: 'px-6 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors'
+                                }, '选择文件')
+                            ] : [
+                                React.createElement('img', {
+                                    src: image,
+                                    alt: '设计图预览',
+                                    className: 'max-w-full max-h-60 mx-auto rounded-md mb-4'
+                                }),
+                                React.createElement('button', {
+                                    onClick: () => setImage(null),
+                                    className: 'px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors'
+                                }, '重新上传')
+                            ]
+                        ),
+                        error && React.createElement('div', { className: 'mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-600' },
+                            React.createElement(AlertCircle, { size: 18 }),
+                            error
+                        ),
+                        React.createElement('button', {
+                            onClick: analyzeImage,
+                            disabled: loading || !image,
+                            className: 'w-full mt-6 py-3 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2'
+                        }, loading ? [
+                            React.createElement('div', { className: 'w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' }),
+                            '分析中...'
+                        ] : '生成热图分析')
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-lg shadow-md p-6' },
+                        React.createElement('h2', { className: 'text-xl font-semibold mb-4' }, '分析结果'),
+                        React.createElement('div', { className: 'min-h-[300px] flex flex-col items-center justify-center text-gray-400' },
+                            result ? React.createElement('div', { className: 'text-left w-full text-gray-700 whitespace-pre-line' }, result) : [
+                                React.createElement(HeatMap, { size: 64, className: 'mx-auto mb-4' }),
+                                React.createElement('p', null, '上传设计图并点击分析按钮查看结果')
+                            ]
+                        )
+                    )
+                ),
+                React.createElement('footer', { className: 'max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm' },
+                    '© 2026 视界分析 AI - 基于Google Gemini AI开发'
+                )
+            );
+        };
+
+        createRoot(document.getElementById('root')).render(React.createElement(App));
+    </script>
 </body>
 </html>
