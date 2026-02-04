@@ -26,10 +26,6 @@
         header h1 {
             color: #3b82f6;
             font-size: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
         }
         header p {
             color: #6b7280;
@@ -62,10 +58,6 @@
         .upload-area:hover {
             border-color: #3b82f6;
         }
-        .upload-area p {
-            color: #6b7280;
-            margin: 16px 0 20px;
-        }
         .btn {
             padding: 10px 20px;
             border-radius: 6px;
@@ -79,9 +71,6 @@
             background: #3b82f6;
             color: white;
         }
-        .btn-blue:hover {
-            background: #2563eb;
-        }
         .btn-blue:disabled {
             background: #d1d5db;
             cursor: not-allowed;
@@ -90,9 +79,6 @@
             background: #f3f4f6;
             color: #6b7280;
             border: 1px solid #d1d5db;
-        }
-        .btn-gray:hover {
-            background: #e5e7eb;
         }
         .preview-img {
             max-width: 100%;
@@ -108,8 +94,6 @@
             margin-top: 20px;
             color: #dc2626;
             display: none;
-            align-items: center;
-            gap: 8px;
         }
         .result-area {
             min-height: 300px;
@@ -153,6 +137,14 @@
             margin-top: 40px;
         }
     </style>
+    <!-- 关键修复：提前用importmap定义SDK，确保模块正确加载 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@google/genai": "https://esm.sh/@google/genai@1.37.0"
+        }
+    }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -201,63 +193,63 @@
         </footer>
     </div>
 
-    <script>
-        // 全局变量
-        let imageData = null;
-        const API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0"; // 替换为你的API Key
+    <!-- 关键修复：改用module脚本，直接导入SDK -->
+    <script type="module">
+        // 全局变量挂载到window，让HTML的onclick能调用
+        window.imageData = null;
+        window.API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0"; // 替换为你的API Key
 
-        // 工具函数：显示/隐藏元素
-        function show(id) { document.getElementById(id).style.display = 'block'; }
-        function hide(id) { document.getElementById(id).style.display = 'none'; }
-        function showFlex(id) { document.getElementById(id).style.display = 'flex'; }
+        // 直接导入SDK，避免动态加载的兼容性问题
+        import { GoogleGenerativeAI } from "@google/genai";
+        const genAI = new GoogleGenerativeAI(window.API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        // 显示错误
-        function showError(text) {
+        // 工具函数挂载到window
+        window.show = function(id) { document.getElementById(id).style.display = 'block'; }
+        window.hide = function(id) { document.getElementById(id).style.display = 'none'; }
+        window.showFlex = function(id) { document.getElementById(id).style.display = 'flex'; }
+
+        window.showError = function(text) {
             document.getElementById('error-text').textContent = text;
-            showFlex('error-alert');
+            window.showFlex('error-alert');
         }
 
-        // 隐藏错误
-        function hideError() {
-            hide('error-alert');
+        window.hideError = function() {
+            window.hide('error-alert');
         }
 
-        // 处理图片上传
-        function handleUpload(event) {
+        window.handleUpload = function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             if (!file.type.startsWith('image/')) {
-                showError('请选择图片文件（PNG/JPG）');
+                window.showError('请选择图片文件（PNG/JPG）');
                 return;
             }
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                imageData = e.target.result;
-                hide('upload-empty');
-                show('upload-preview');
-                document.getElementById('preview-img').src = imageData;
+                window.imageData = e.target.result;
+                window.hide('upload-empty');
+                window.show('upload-preview');
+                document.getElementById('preview-img').src = window.imageData;
                 
-                // 启用分析按钮
                 const btn = document.getElementById('analyze-btn');
                 btn.disabled = false;
                 btn.style.background = '#f97316';
 
-                hideError();
-                hide('result-content');
-                show('result-empty');
+                window.hideError();
+                window.hide('result-content');
+                window.show('result-empty');
             };
             reader.readAsDataURL(file);
         }
 
-        // 清空图片
-        function clearImage() {
-            imageData = null;
-            show('upload-empty');
-            hide('upload-preview');
+        window.clearImage = function() {
+            window.imageData = null;
+            window.show('upload-empty');
+            window.hide('upload-preview');
             
-            // 禁用分析按钮
             const btn = document.getElementById('analyze-btn');
             btn.disabled = true;
             btn.style.background = '#d1d5db';
@@ -265,40 +257,20 @@
             document.getElementById('file-upload').value = '';
         }
 
-        // AI分析核心逻辑
-        async function analyzeImage() {
-            if (!imageData) {
-                showError('请先上传设计图');
+        window.analyzeImage = async function() {
+            if (!window.imageData) {
+                window.showError('请先上传设计图');
                 return;
             }
 
-            // 显示加载状态
-            hide('result-empty');
-            showFlex('loading');
-            hideError();
+            window.hide('result-empty');
+            window.showFlex('loading');
+            window.hideError();
 
             try {
-                // 加载Google GenAI SDK（兼容所有环境）
-                const script = document.createElement('script');
-                script.src = 'https://esm.sh/@google/genai@1.37.0?bundle';
-                const loadSDK = new Promise((resolve, reject) => {
-                    script.onload = async () => {
-                        const module = await import('https://esm.sh/@google/genai@1.37.0');
-                        resolve(module);
-                    };
-                    script.onerror = () => reject(new Error('SDK加载失败'));
-                });
-                document.body.appendChild(script);
+                const base64Data = window.imageData.split(',')[1];
+                const mimeType = window.imageData.split(';')[0].split(':')[1];
 
-                const module = await loadSDK;
-                const genAI = new module.GoogleGenerativeAI(API_KEY);
-                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-                // 处理图片数据
-                const base64Data = imageData.split(',')[1];
-                const mimeType = imageData.split(';')[0].split(':')[1];
-
-                // 提示词
                 const prompt = `分析这张移动端设计图的用户注意力热图分布，给出3条具体的优化建议，每条建议包含「问题原因」和「修改做法」，格式如下：
 1. 建议：[具体建议]
    原因：[问题原因]
@@ -310,22 +282,20 @@
    原因：[问题原因]
    做法：[修改做法]`;
 
-                // 调用AI
                 const result = await model.generateContent([
                     prompt,
                     { inlineData: { data: base64Data, mimeType: mimeType } }
                 ]);
                 const text = (await result.response).text();
 
-                // 显示结果
-                hide('loading');
-                show('result-content');
+                window.hide('loading');
+                window.show('result-content');
                 document.getElementById('result-content').textContent = text;
 
             } catch (err) {
-                showError('分析失败：' + (err.message || '请检查API Key是否有效'));
-                hide('loading');
-                show('result-empty');
+                window.showError('分析失败：' + (err.message || '请检查API Key是否有效'));
+                window.hide('loading');
+                window.show('result-empty');
             }
         }
     </script>
