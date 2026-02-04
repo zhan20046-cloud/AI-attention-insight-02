@@ -1,33 +1,333 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视界分析 AI - 移动端设计热图分析</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+        }
         body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
             background-color: #f9fafb;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        header h1 {
+            color: #3b82f6;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        header p {
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        .card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+        }
+        .upload-area p {
+            color: #6b7280;
+            margin: 16px 0 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .btn-blue {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-blue:hover {
+            background: #2563eb;
+        }
+        .btn-blue:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+        .btn-gray {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+        .btn-gray:hover {
+            background: #e5e7eb;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        .error-alert {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 20px;
+            color: #dc2626;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-area {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        .result-content {
+            min-height: 300px;
+            text-align: left;
+            color: #374151;
+            display: none;
+            white-space: pre-line;
+        }
+        .loading {
+            min-height: 300px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+        }
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 40px;
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
 </head>
 <body>
-    <div id="root"></div>
+    <div class="container">
+        <header>
+            <h1>视界分析 AI</h1>
+            <p>移动端设计注意力热图分析工具</p>
+        </header>
+
+        <div class="main">
+            <div class="card">
+                <h2>上传设计图</h2>
+                <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+                    <div id="upload-empty">
+                        <p>点击选择设计图（PNG/JPG）</p>
+                        <button class="btn btn-blue">选择文件</button>
+                    </div>
+                    <div id="upload-preview" style="display: none;">
+                        <img id="preview-img" class="preview-img" alt="设计图预览">
+                        <button class="btn btn-gray" onclick="clearImage()">重新上传</button>
+                    </div>
+                </div>
+                <input type="file" id="file-upload" accept="image/*" style="display: none;" onchange="handleUpload(event)">
+                <div class="error-alert" id="error-alert">
+                    <span id="error-text"></span>
+                </div>
+                <button id="analyze-btn" class="btn btn-blue" style="width: 100%; margin-top: 20px;" disabled onclick="analyzeImage()">
+                    生成热图分析
+                </button>
+            </div>
+
+            <div class="card">
+                <h2>分析结果</h2>
+                <div id="result-empty" class="result-area">
+                    <p>上传设计图后点击分析按钮查看结果</p>
+                </div>
+                <div id="loading" class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>AI分析中...</p>
+                </div>
+                <div id="result-content" class="result-content"></div>
+            </div>
+        </div>
+
+        <footer>
+            © 2026 视界分析 AI - 基于Google Gemini AI开发
+        </footer>
+    </div>
+
+    <script>
+        // 全局变量
+        let imageData = null;
+        const API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0"; // 替换为你的API Key
+
+        // 工具函数：显示/隐藏元素
+        function show(id) { document.getElementById(id).style.display = 'block'; }
+        function hide(id) { document.getElementById(id).style.display = 'none'; }
+        function showFlex(id) { document.getElementById(id).style.display = 'flex'; }
+
+        // 显示错误
+        function showError(text) {
+            document.getElementById('error-text').textContent = text;
+            showFlex('error-alert');
+        }
+
+        // 隐藏错误
+        function hideError() {
+            hide('error-alert');
+        }
+
+        // 处理图片上传
+        function handleUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showError('请选择图片文件（PNG/JPG）');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageData = e.target.result;
+                hide('upload-empty');
+                show('upload-preview');
+                document.getElementById('preview-img').src = imageData;
+                
+                // 启用分析按钮
+                const btn = document.getElementById('analyze-btn');
+                btn.disabled = false;
+                btn.style.background = '#f97316';
+
+                hideError();
+                hide('result-content');
+                show('result-empty');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 清空图片
+        function clearImage() {
+            imageData = null;
+            show('upload-empty');
+            hide('upload-preview');
+            
+            // 禁用分析按钮
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.style.background = '#d1d5db';
+
+            document.getElementById('file-upload').value = '';
+        }
+
+        // AI分析核心逻辑
+        async function analyzeImage() {
+            if (!imageData) {
+                showError('请先上传设计图');
+                return;
+            }
+
+            // 显示加载状态
+            hide('result-empty');
+            showFlex('loading');
+            hideError();
+
+            try {
+                // 加载Google GenAI SDK（兼容所有环境）
+                const script = document.createElement('script');
+                script.src = 'https://esm.sh/@google/genai@1.37.0?bundle';
+                const loadSDK = new Promise((resolve, reject) => {
+                    script.onload = async () => {
+                        const module = await import('https://esm.sh/@google/genai@1.37.0');
+                        resolve(module);
+                    };
+                    script.onerror = () => reject(new Error('SDK加载失败'));
+                });
+                document.body.appendChild(script);
+
+                const module = await loadSDK;
+                const genAI = new module.GoogleGenerativeAI(API_KEY);
+                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+                // 处理图片数据
+                const base64Data = imageData.split(',')[1];
+                const mimeType = imageData.split(';')[0].split(':')[1];
+
+                // 提示词
+                const prompt = `分析这张移动端设计图的用户注意力热图分布，给出3条具体的优化建议，每条建议包含「问题原因」和「修改做法」，格式如下：
+1. 建议：[具体建议]
+   原因：[问题原因]
+   做法：[修改做法]
+2. 建议：[具体建议]
+   原因：[问题原因]
+   做法：[修改做法]
+3. 建议：[具体建议]
+   原因：[问题原因]
+   做法：[修改做法]`;
+
+                // 调用AI
+                const result = await model.generateContent([
+                    prompt,
+                    { inlineData: { data: base64Data, mimeType: mimeType } }
+                ]);
+                const text = (await result.response).text();
+
+                // 显示结果
+                hide('loading');
+                show('result-content');
+                document.getElementById('result-content').textContent = text;
+
+            } catch (err) {
+                showError('分析失败：' + (err.message || '请检查API Key是否有效'));
+                hide('loading');
+                show('result-empty');
+            }
+        }
+    </script>
 </body>
 </html>
