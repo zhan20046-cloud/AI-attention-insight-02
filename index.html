@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视界分析 AI</title>
     <style>
-        /* 基础样式 - 无任何外部依赖 */
+        /* 保留之前的所有样式，无需修改 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
             background: #f9fafb;
@@ -16,7 +16,6 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        /* 头部样式 */
         header {
             text-align: center;
             margin-bottom: 40px;
@@ -30,7 +29,6 @@
             color: #6b7280;
             margin: 8px 0 0;
         }
-        /* 卡片样式 */
         .card {
             background: white;
             border-radius: 8px;
@@ -50,7 +48,6 @@
             margin: 0 0 20px;
             color: #1f2937;
         }
-        /* 上传区域 */
         .upload-box {
             border: 2px dashed #d1d5db;
             border-radius: 8px;
@@ -66,7 +63,6 @@
             color: #6b7280;
             margin: 16px 0 20px;
         }
-        /* 按钮样式 */
         .btn {
             padding: 10px 20px;
             border: none;
@@ -87,7 +83,6 @@
             color: #6b7280;
             border: 1px solid #d1d5db;
         }
-        /* 预览区域 */
         .preview {
             display: none;
             text-align: center;
@@ -98,7 +93,6 @@
             border-radius: 4px;
             margin-bottom: 16px;
         }
-        /* 错误提示 */
         .error {
             display: none;
             background: #fee2e2;
@@ -107,7 +101,6 @@
             border-radius: 6px;
             margin-top: 20px;
         }
-        /* 结果区域 */
         .result-empty {
             min-height: 300px;
             display: flex;
@@ -142,7 +135,6 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        /* 页脚 */
         footer {
             text-align: center;
             color: #9ca3af;
@@ -150,18 +142,23 @@
             margin-top: 40px;
         }
     </style>
+    <!-- 提前加载Google GenAI SDK（浏览器兼容版） -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/genai": "https://esm.sh/@google/genai@1.37.0"
+            }
+        }
+    </script>
 </head>
 <body>
     <div class="container">
-        <!-- 头部 -->
         <header>
             <h1>视界分析 AI</h1>
             <p>移动端设计注意力热图分析工具</p>
         </header>
 
-        <!-- 主体内容 -->
         <div class="card-wrap">
-            <!-- 上传卡片 -->
             <div class="card">
                 <h2>上传设计图</h2>
                 <div class="upload-box" onclick="document.getElementById('file-input').click()">
@@ -181,7 +178,6 @@
                 </button>
             </div>
 
-            <!-- 结果卡片 -->
             <div class="card">
                 <h2>分析结果</h2>
                 <div class="result-empty" id="result-empty">
@@ -195,17 +191,21 @@
             </div>
         </div>
 
-        <!-- 页脚 -->
         <footer>
             © 2026 视界分析 AI - 基于Google Gemini AI开发
         </footer>
     </div>
 
-    <script>
+    <script type="module">
         // 全局变量
         let imageBase64 = null;
         // 替换成你的Gemini API Key
         const API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0";
+
+        // 提前导入并初始化GenAI（解决构造函数问题）
+        import { GoogleGenerativeAI } from '@google/genai';
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         // 工具函数：显示/隐藏元素
         function toggleElement(id, show) {
@@ -230,25 +230,20 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            // 只允许图片文件
             if (!file.type.startsWith('image/')) {
                 showError('请选择图片文件（PNG/JPG）');
                 return;
             }
 
-            // 读取图片为Base64
             const reader = new FileReader();
             reader.onload = function(e) {
                 imageBase64 = e.target.result;
-                // 显示预览
                 toggleElement('upload-tip', false);
                 toggleElement('upload-preview', true);
                 document.getElementById('preview-img').src = imageBase64;
-                // 启用分析按钮
                 const analyzeBtn = document.getElementById('analyze-btn');
                 analyzeBtn.disabled = false;
-                analyzeBtn.style.background = '#f97316'; // 橙色按钮
-                // 清空错误和结果
+                analyzeBtn.style.background = '#f97316';
                 hideError();
                 toggleElement('result-content', false);
                 toggleElement('result-empty', true);
@@ -261,33 +256,25 @@
             imageBase64 = null;
             toggleElement('upload-preview', false);
             toggleElement('upload-tip', true);
-            // 禁用分析按钮
             const analyzeBtn = document.getElementById('analyze-btn');
             analyzeBtn.disabled = true;
             analyzeBtn.style.background = '#d1d5db';
-            // 清空文件输入
             document.getElementById('file-input').value = '';
         }
 
-        // 调用Gemini AI分析图片
+        // 调用Gemini AI分析图片（核心修复）
         async function analyzeImage() {
             if (!imageBase64) {
                 showError('请先上传设计图');
                 return;
             }
 
-            // 显示加载状态
             toggleElement('result-empty', false);
             toggleElement('loading', true);
             hideError();
 
             try {
-                // 加载Google GenAI SDK
-                const module = await import('https://esm.sh/@google/genai@1.37.0');
-                const genAI = new module.GoogleGenerativeAI(API_KEY);
-                const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-                // 提取Base64数据（去掉前缀）
+                // 提取图片数据
                 const imageData = imageBase64.split(',')[1];
                 const mimeType = imageBase64.split(';')[0].split(':')[1];
 
@@ -297,7 +284,7 @@
 2. 优化建议2（说明原因和具体做法）
 3. 优化建议3（说明原因和具体做法）`;
 
-                // 调用AI
+                // 调用AI（修复后的写法）
                 const result = await model.generateContent([
                     prompt,
                     {
@@ -317,15 +304,14 @@
                 document.getElementById('result-content').textContent = text;
 
             } catch (error) {
-                // 显示错误
-                showError('分析失败：' + (error.message || '请检查API Key是否正确'));
+                showError('分析失败：' + (error.message || '请检查API Key是否有效'));
                 toggleElement('loading', false);
                 toggleElement('result-empty', true);
                 console.error('AI分析错误：', error);
             }
         }
 
-        // 绑定分析按钮点击事件
+        // 绑定按钮事件
         document.getElementById('analyze-btn').addEventListener('click', analyzeImage);
     </script>
 </body>
