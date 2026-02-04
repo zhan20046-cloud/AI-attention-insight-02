@@ -3,15 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视界分析 AI - 移动端设计热图分析</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>视界分析 AI</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', 'Noto Sans SC', sans-serif;
             background-color: #f9fafb;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; }
+        header h1 {
+            font-size: 28px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        header p { color: #6b7280; margin-top: 8px; }
+        .main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+        }
+        .card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        .upload-area:hover { border-color: #3b82f6; }
+        .upload-area .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: #9ca3af;
+        }
+        .upload-area p {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .btn-blue {
+            background: #3b82f6;
+            color: white;
+            border: none;
+        }
+        .btn-blue:hover { background: #2563eb; }
+        .btn-gray {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+        .btn-gray:hover { background: #e5e7eb; }
+        .preview-img {
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        .error-alert {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #dc2626;
+            display: none;
+        }
+        .result-area {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            text-align: center;
+        }
+        .result-area .icon {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+        }
+        .result-content {
+            min-height: 300px;
+            text-align: left;
+            color: #374151;
+            display: none;
+            white-space: pre-line;
+        }
+        .loading-state {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            display: none;
         }
         .spin {
             width: 20px;
@@ -20,20 +130,29 @@
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+            border-color: #9ca3af;
+            border-top-color: transparent;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+            margin-top: 40px;
+        }
     </style>
-    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.268.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="min-h-screen p-6">
-        <header class="max-w-4xl mx-auto mb-8 text-center">
-            <h1 class="text-3xl font-bold text-blue-600 flex items-center justify-center gap-2">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <div class="container">
+        <header>
+            <h1>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 8v13"></path>
                     <path d="M18 8h3"></path>
                     <path d="M6 8H3"></path>
@@ -45,34 +164,27 @@
                 </svg>
                 视界分析 AI
             </h1>
-            <p class="text-gray-500 mt-2">移动端设计注意力热图分析工具</p>
+            <p>移动端设计注意力热图分析工具</p>
         </header>
 
-        <main class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">上传设计图</h2>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-                    <div id="upload-empty">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="17 8 12 3 7 8"></polyline>
-                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                        </svg>
-                        <p class="text-gray-500 mb-4">点击或拖拽文件至此处上传</p>
-                        <input type="file" accept="image/*" id="file-upload" class="hidden" onchange="handleImageUpload(event)">
-                        <label for="file-upload" class="px-6 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors">
-                            选择文件
-                        </label>
-                    </div>
-                    <div id="upload-preview" class="hidden">
-                        <img id="preview-img" alt="设计图预览" class="max-w-full max-h-60 mx-auto rounded-md mb-4">
-                        <button onclick="clearImage()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-600 hover:bg-gray-50 transition-colors">
-                            重新上传
-                        </button>
-                    </div>
+        <div class="main">
+            <div class="card">
+                <h2>上传设计图</h2>
+                <div class="upload-area" id="upload-empty">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>点击或拖拽文件至此处上传</p>
+                    <input type="file" accept="image/*" id="file-upload" style="display: none;" onchange="handleUpload(event)">
+                    <button class="btn btn-blue" onclick="document.getElementById('file-upload').click()">选择文件</button>
                 </div>
-
-                <div id="error-alert" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-600 hidden">
+                <div class="upload-area" id="upload-preview" style="display: none;">
+                    <img id="preview-img" class="preview-img" alt="设计图预览">
+                    <button class="btn btn-gray" onclick="clearUpload()">重新上传</button>
+                </div>
+                <div class="error-alert" id="error-alert">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -80,16 +192,15 @@
                     </svg>
                     <span id="error-text"></span>
                 </div>
-
-                <button id="analyze-btn" onclick="analyzeImage()" disabled class="w-full mt-6 py-3 bg-gray-400 text-white rounded-md flex items-center justify-center gap-2">
+                <button class="btn btn-blue" id="analyze-btn" style="width: 100%; margin-top: 20px; padding: 12px; background: #d1d5db; cursor: not-allowed;" onclick="analyzeImage()">
                     生成热图分析
                 </button>
             </div>
 
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">分析结果</h2>
-                <div id="result-empty" class="min-h-[300px] flex flex-col items-center justify-center text-gray-400">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4">
+            <div class="card">
+                <h2>分析结果</h2>
+                <div class="result-area" id="result-empty">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 8v13"></path>
                         <path d="M18 8h3"></path>
                         <path d="M6 8H3"></path>
@@ -101,72 +212,79 @@
                     </svg>
                     <p>上传设计图并点击分析按钮查看结果</p>
                 </div>
-                <div id="result-content" class="min-h-[300px] hidden text-left w-full text-gray-700 whitespace-pre-line"></div>
-                <div id="loading-state" class="min-h-[300px] flex flex-col items-center justify-center text-gray-400 hidden">
-                    <div class="spin mb-4"></div>
+                <div class="result-content" id="result-content"></div>
+                <div class="loading-state" id="loading-state">
+                    <div class="spin"></div>
                     <p>分析中...</p>
                 </div>
             </div>
-        </main>
+        </div>
 
-        <footer class="max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
+        <footer>
             © 2026 视界分析 AI - 基于Google Gemini AI开发
         </footer>
     </div>
 
     <script>
         let imageData = null;
-        const API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0";
+        const API_KEY = "YOUR_GEMINI_API_KEY"; // 替换为你的API Key
 
-        function showElement(id) { document.getElementById(id).classList.remove('hidden'); }
-        function hideElement(id) { document.getElementById(id).classList.add('hidden'); }
+        // 显示/隐藏元素
+        function show(el) { el.style.display = 'block'; }
+        function hide(el) { el.style.display = 'none'; }
 
-        function showError(text) {
-            document.getElementById('error-text').textContent = text;
-            showElement('error-alert');
-        }
-        function hideError() { hideElement('error-alert'); }
-
-        function handleImageUpload(event) {
+        // 处理上传
+        function handleUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
-            reader.onload = function(event) {
-                imageData = event.target.result;
-                hideElement('upload-empty');
-                showElement('upload-preview');
+            reader.onload = function(e) {
+                imageData = e.target.result;
+                hide(document.getElementById('upload-empty'));
+                show(document.getElementById('upload-preview'));
                 document.getElementById('preview-img').src = imageData;
-                document.getElementById('analyze-btn').disabled = false;
-                document.getElementById('analyze-btn').classList.remove('bg-gray-400');
-                document.getElementById('analyze-btn').classList.add('bg-orange-500', 'hover:bg-orange-600');
-                hideError();
-                hideElement('result-content');
-                showElement('result-empty');
+                // 启用按钮
+                const btn = document.getElementById('analyze-btn');
+                btn.style.background = '#f97316';
+                btn.style.cursor = 'pointer';
+                // 清空错误
+                hide(document.getElementById('error-alert'));
+                show(document.getElementById('result-empty'));
+                hide(document.getElementById('result-content'));
             };
             reader.readAsDataURL(file);
         }
 
-        function clearImage() {
+        // 清空上传
+        function clearUpload() {
             imageData = null;
-            showElement('upload-empty');
-            hideElement('upload-preview');
-            document.getElementById('analyze-btn').disabled = true;
-            document.getElementById('analyze-btn').classList.add('bg-gray-400');
-            document.getElementById('analyze-btn').classList.remove('bg-orange-500', 'hover:bg-orange-600');
+            show(document.getElementById('upload-empty'));
+            hide(document.getElementById('upload-preview'));
+            const btn = document.getElementById('analyze-btn');
+            btn.style.background = '#d1d5db';
+            btn.style.cursor = 'not-allowed';
         }
 
+        // 显示错误
+        function showError(text) {
+            document.getElementById('error-text').textContent = text;
+            show(document.getElementById('error-alert'));
+        }
+
+        // AI分析
         async function analyzeImage() {
             if (!imageData) {
                 showError('请先上传设计图');
                 return;
             }
 
-            hideElement('result-empty');
-            showElement('loading-state');
-            hideError();
+            hide(document.getElementById('result-empty'));
+            show(document.getElementById('loading-state'));
+            hide(document.getElementById('error-alert'));
 
             try {
+                // 加载Google AI SDK
                 const script = document.createElement('script');
                 script.src = 'https://esm.sh/@google/genai@1.37.0';
                 script.type = 'module';
@@ -180,27 +298,26 @@
 2. 建议2
 3. 建议3`;
 
-                    const aiResult = await model.generateContent([
+                    const result = await model.generateContent([
                         prompt,
                         { inlineData: { mimeType: 'image/png', data: imageData.split(',')[1] } }
                     ]);
-                    const resultText = (await aiResult.response).text();
+                    const text = (await result.response).text();
                     
-                    hideElement('loading-state');
-                    showElement('result-content');
-                    document.getElementById('result-content').textContent = resultText;
+                    hide(document.getElementById('loading-state'));
+                    show(document.getElementById('result-content'));
+                    document.getElementById('result-content').textContent = text;
                 };
                 script.onerror = function() {
-                    showError('AI SDK加载失败，请刷新页面重试');
-                    hideElement('loading-state');
-                    showElement('result-empty');
+                    showError('AI服务加载失败，请刷新重试');
+                    hide(document.getElementById('loading-state'));
+                    show(document.getElementById('result-empty'));
                 };
                 document.body.appendChild(script);
-
             } catch (err) {
-                showError('分析失败，请检查API Key是否正确');
-                hideElement('loading-state');
-                showElement('result-empty');
+                showError('分析失败，请检查API Key');
+                hide(document.getElementById('loading-state'));
+                show(document.getElementById('result-empty'));
             }
         }
     </script>
