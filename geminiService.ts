@@ -2,8 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult, AreaOfInterest, AttentionPoint } from "./types";
 
-// Initialize GoogleGenAI with API key from environment variable as per guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// 注意这里必须加 VITE_ 前缀，且使用 import.meta.env
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
 
 export const analyzeUIHeatmap = async (base64Image: string): Promise<AnalysisResult> => {
   const model = 'gemini-3-pro-preview';
