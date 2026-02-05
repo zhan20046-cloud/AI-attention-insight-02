@@ -185,14 +185,11 @@
         </footer>
     </div>
 
-    <!-- 核心修改：纯原生JS，无Module，无importmap -->
     <script>
-        // 全局变量（所有函数直接暴露在全局，onclick能直接调用）
         let imageData = null;
         const API_KEY = "AIzaSyAKKfTrjVAZ2K0TEE3glbpytHB_6uvhMK0"; // 替换为你的API Key
         let genAISDKLoaded = false;
 
-        // 工具函数（最简单的显示/隐藏）
         function show(id) {
             document.getElementById(id).style.display = 'block';
         }
@@ -203,7 +200,6 @@
             document.getElementById(id).style.display = 'flex';
         }
 
-        // 显示错误提示
         function showError(text) {
             document.getElementById('error-text').textContent = text;
             showFlex('error-alert');
@@ -212,29 +208,25 @@
             hide('error-alert');
         }
 
-        // 1. 处理图片上传（核心交互1）
         function handleUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // 校验图片类型
             if (!file.type.startsWith('image/')) {
                 showError('请选择PNG/JPG格式的图片');
                 return;
             }
 
-            // 读取图片为Base64
             const reader = new FileReader();
             reader.onload = function(e) {
                 imageData = e.target.result;
-                // 显示预览、启用按钮（交互生效）
                 hide('upload-empty');
                 show('upload-preview');
                 document.getElementById('preview-img').src = imageData;
                 
                 const analyzeBtn = document.getElementById('analyze-btn');
                 analyzeBtn.disabled = false;
-                analyzeBtn.style.background = '#f97316'; // 橙色激活状态
+                analyzeBtn.style.background = '#f97316';
 
                 hideError();
                 hide('result-content');
@@ -243,68 +235,58 @@
             reader.readAsDataURL(file);
         }
 
-        // 2. 清空图片（核心交互2）
         function clearImage() {
             imageData = null;
             show('upload-empty');
             hide('upload-preview');
             
-            // 禁用按钮
             const analyzeBtn = document.getElementById('analyze-btn');
             analyzeBtn.disabled = true;
             analyzeBtn.style.background = '#d1d5db';
 
-            // 清空文件输入
             document.getElementById('file-upload').value = '';
         }
 
-        // 3. 加载Gemini SDK（兼容所有浏览器）
+        // 关键修改：更换为更稳定的CDN源
         function loadGeminiSDK() {
             return new Promise((resolve, reject) => {
-                // 如果已加载，直接返回
                 if (window.GoogleGenerativeAI) {
                     resolve(window.GoogleGenerativeAI);
                     return;
                 }
 
-                // 动态加载SDK（非Module方式）
                 const script = document.createElement('script');
-                // 使用UMD兼容版SDK，避免Module问题
-                script.src = 'https://cdn.jsdelivr.net/npm/@google/generative-ai@0.17.1/dist/index.umd.js';
+                // 改用 unpkg 作为CDN源，更稳定
+                script.src = 'https://unpkg.com/@google/generative-ai@0.17.1/dist/index.umd.js';
                 script.onload = () => {
                     genAISDKLoaded = true;
                     resolve(window.GoogleGenerativeAI);
                 };
                 script.onerror = () => {
-                    reject(new Error('Gemini AI SDK加载失败，请检查网络'));
+                    reject(new Error('Gemini AI SDK加载失败，请检查网络或稍后重试'));
                 };
                 document.body.appendChild(script);
             });
         }
 
-        // 4. AI分析核心功能（核心交互3）
         async function analyzeImage() {
             if (!imageData) {
                 showError('请先上传设计图');
                 return;
             }
 
-            // 显示加载状态
             hide('result-empty');
             showFlex('loading');
             hideError();
 
             try {
-                // 第一步：加载SDK（确保构造函数可用）
                 const GoogleGenerativeAI = await loadGeminiSDK();
                 const genAI = new GoogleGenerativeAI(API_KEY);
                 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-                // 第二步：处理图片数据
                 const base64Data = imageData.split(',')[1];
                 const mimeType = imageData.split(';')[0].split(':')[1];
 
-                // 第三步：构建提示词
                 const prompt = `分析这张移动端设计图的用户注意力热图分布，给出3条具体的优化建议，每条包含原因和做法：
 1. 建议：[具体建议]
    原因：[为什么这个地方需要优化]
@@ -316,7 +298,6 @@
    原因：[为什么这个地方需要优化]
    做法：[具体怎么修改]`;
 
-                // 第四步：调用AI分析
                 const result = await model.generateContent([
                     prompt,
                     {
@@ -329,17 +310,15 @@
                 const response = await result.response;
                 const text = response.text();
 
-                // 第五步：显示结果
                 hide('loading');
                 show('result-content');
                 document.getElementById('result-content').textContent = text;
 
             } catch (err) {
-                // 错误处理
                 showError('分析失败：' + (err.message || '请检查API Key是否有效'));
                 hide('loading');
                 show('result-empty');
-                console.log('调试信息：', err); // 方便排查问题
+                console.log('调试信息：', err);
             }
         }
     </script>
