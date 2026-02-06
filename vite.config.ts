@@ -14,10 +14,19 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     target: 'es2015',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: undefined
+      },
+      onwarn(warning, warn) {
+        // 忽略某些警告
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+        warn(warning);
       }
     }
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   }
 });
